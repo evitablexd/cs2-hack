@@ -9,6 +9,23 @@ enum ELifeState : int
     LIFE_DISCARDBODY
 };
 
+enum EHitgroups {
+    HITGROUP_INVALID = -1,
+    HITGROUP_GENERIC = 0,
+    HITGROUP_HEAD,
+    HITGROUP_CHEST,
+    HITGROUP_STOMACH,
+    HITGROUP_LEFTARM,
+    HITGROUP_RIGHTARM,
+    HITGROUP_LEFTLEG,
+    HITGROUP_RIGHTLEG,
+    HITGROUP_NECK,
+    HITGROUP_UNUSED,
+    HITGROUP_GEAR,
+    HITGROUP_SPECIAL,
+    HITGROUP_COUNT,
+};
+
 enum EFlags : int
 {
     FL_ONGROUND = (1 << 0), // entity is at rest / on the ground

@@ -29,7 +29,7 @@ void miscellaneous::run(CUserCmd* cmd)
 
 void miscellaneous::bunny_hop(CUserCmd* cmd)
 {
-	if (!sdk::local_controller->m_bPawnIsAlive() || !g_variables.bunnyhop)
+	if (!sdk::local_controller->m_bPawnIsAlive() || !settings.bunnyhop)
 		return;
 
 	// check if player is in noclip or on ladder
@@ -61,7 +61,7 @@ void miscellaneous::validate_user_cmd(CUserCmd* cmd, CBaseUserCmdPB* pUserCmd, C
 {
 	if (!pUserCmd) return;
 
-	if (g_variables.anti_untrusted) {
+	if (settings.anti_untrusted) {
 		if (pInputEntry->pViewCmd->angValue.IsValid())
 		{
 			pInputEntry->pViewCmd->angValue.Clamp();
@@ -128,7 +128,7 @@ void miscellaneous::correct_movement(CBaseUserCmdPB* pUserCmd, CCSGOInputHistory
 
 void miscellaneous::skin_changer()
 {
-	if (!sdk::local_controller || !sdk::local_pawn || !g_variables.skin_changer)
+	if (!sdk::local_controller || !sdk::local_pawn || !settings.skin_changer)
 		return;
 
 	//using item_t = C_EconItemView * (__fastcall*)(C_BasePlayerWeapon*);
@@ -158,7 +158,7 @@ void miscellaneous::skin_changer()
 	if (!pWeaponSceneNode)
 		return;
 
-	pActiveWeapon->m_nFallbackPaintKit() = g_variables.skin_id;
+	pActiveWeapon->m_nFallbackPaintKit() = settings.skin_id;
 
 	pActiveWeapon->m_nFallbackSeed() = 0;
 	pActiveWeapon->m_nFallbackStatTrak() = 1337;

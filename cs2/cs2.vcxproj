@@ -29,6 +29,7 @@
     <ClCompile Include="src\menu\framework\mui.cpp" />
     <ClCompile Include="src\menu\keybinds.cpp" />
     <ClCompile Include="src\menu\menu.cpp" />
+    <ClCompile Include="src\notify.cpp" />
     <ClCompile Include="src\sdk\chandle\chandle.cpp" />
     <ClCompile Include="src\sdk\datatypes\EventManager.cpp" />
     <ClCompile Include="src\sdk\datatypes\matrix.cpp" />
@@ -75,6 +76,7 @@
     <ClInclude Include="src\menu\framework\mui.h" />
     <ClInclude Include="src\menu\keybinds.h" />
     <ClInclude Include="src\menu\menu.h" />
+    <ClInclude Include="src\notify.h" />
     <ClInclude Include="src\sdk\bitflag.h" />
     <ClInclude Include="src\sdk\ccvar\ccvar.h" />
     <ClInclude Include="src\sdk\chandle\chandle.h" />

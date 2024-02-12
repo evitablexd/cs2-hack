@@ -27,6 +27,12 @@ struct col_t {
 
 	__forceinline col_t alpha(int value) const { return col_t(r(), g(), b(), value); }
 
+	__forceinline col_t convert_imgui()
+	{
+		return col_t(r() * 255.f, g() * 255.f, b() * 255.f, a() * 255.f);
+	}
+
+
 	__forceinline col_t& operator= (const col_t& value)
 	{
 		set(value.r(), value.g(), value.b(), value.a());

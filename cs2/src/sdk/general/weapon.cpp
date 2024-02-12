@@ -17,7 +17,7 @@ CCStrike15ItemDefinition* C_EconItemView::GetStaticData()
 {
     //return CALL_VIRTUAL(CCStrike15ItemDefinition*, 13, this);
     typedef CCStrike15ItemDefinition* (__fastcall* fn)(void*);
-    static auto func = signature::find("client.dll", "E8 ? ? ? ? 48 8B D8 48 8D 4D D0").add(0x1).rel32().get<fn>();
+    static auto func = signature::find("client.dll", "E8 ? ? ? ? 83 BE ? ? ? ? ? 48 8D 4D 80").add(0x1).rel32().get<fn>();
 
     return func(this);
 }

@@ -8,6 +8,8 @@ namespace render
 	inline ImFont* m_acta_symbols = nullptr;
 	inline ImFont* m_indicator_font = nullptr;
 	inline ImFont* m_verdana = nullptr;
+	inline ImFont* m_logs = nullptr;
+	inline ImFont* m_smallest_pixel = nullptr;
 
 	bool world_to_screen(Vector_t& world, Vector_t& screen);
 

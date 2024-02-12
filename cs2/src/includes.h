@@ -4,7 +4,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #pragma comment(lib, "d3d11.lib")
-//#pragma comment(lib, "freetype.lib")
+#pragma comment(lib, "freetype.lib")
 
 #include <Windows.h>
 #include <iostream>
@@ -49,19 +49,20 @@
 
 #include "sdk/bitflag.h"
 #include "virtual.h"
+#include "sdk/math.h"
 #include "sdk/crt.h"
 #include "fnv.h"
+#include "menu/keybinds.h"
+#include "sdk/datatypes/color.h"
+#include "notify.h"
 #include "configs/cfg.h"
 #include "tinyformat.h"
 
 #include "sdk/datatypes/Vector.h"
 #include "sdk/datatypes/matrix.h"
 #include "sdk/datatypes/QAngle.h"
-#include "sdk/datatypes/color.h"
-#include "sdk/math.h"
 #include "sdk/tier0/memalloc.h"
 #include "menu/framework/mui.h"
-#include "menu/keybinds.h"
 #include "menu/menu.h"
 #include "sdk/common/CStrongHandle.h"
 #include "sdk/common/CUtlSymbolLarge.h"
@@ -153,4 +154,5 @@ namespace interfaces
     inline CLocalize* g_localize = nullptr;
     inline IGlobalVariables* g_global_vars = nullptr;
     inline EventManager* g_event_manager = nullptr;
+    inline void* g_pPvsManager = nullptr;
 }

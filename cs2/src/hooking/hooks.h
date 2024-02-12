@@ -42,6 +42,14 @@ namespace hooks
 			void* scene_view, void* scene_layer, void* unknown_pointer, void* unknown);
 	}
 
+	namespace handle_pen
+	{
+		typedef bool(__fastcall* fn)(void*, void*, void*, int, int*);
+		inline fn original;
+
+		bool __fastcall handle_bullet_pen(void* a1, void* tracer, void* a3, int a4, int* sv_showimpacts_penetration);
+	}
+
 	namespace draw_scope
 	{
 		typedef void(__fastcall* fn)(void*);

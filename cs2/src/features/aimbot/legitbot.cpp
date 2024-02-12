@@ -5,7 +5,7 @@ void Aimbot::Run(CUserCmd* pCmd, CCSGOInputHistoryEntryPB* pInputEntry)
 	if (!sdk::local_controller || !sdk::local_pawn)
 		return;
 
-	if (!sdk::local_controller->m_bPawnIsAlive() || !g_key_binds.get_keybind_state(&g_variables.aimbot_key))
+	if (!sdk::local_controller->m_bPawnIsAlive() || !g_key_binds.get_keybind_state(&settings.aimbot_key))
 		return;
 
 	for (int i = 1; i <= interfaces::g_game_resouce->entity_system->GetHighestEntityIndex(); i++)
@@ -28,5 +28,5 @@ void Aimbot::Run(CUserCmd* pCmd, CCSGOInputHistoryEntryPB* pInputEntry)
 
 C_CSPlayerPawn* Aimbot::GetTarget(CBaseUserCmdPB* pCmd, CCSGOInputHistoryEntryPB* pInputEntry)
 {
-
+	return nullptr;
 }

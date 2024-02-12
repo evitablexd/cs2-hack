@@ -90,8 +90,6 @@ namespace math
 		return angle;
 	}
 
-	void AngleVectors(const QAngle_t& angles, Vector_t& forward);
-	float GetFOV(const QAngle_t& view_angles, const Vector_t& start, const Vector_t& end);
 	float NormalizeYaw(float angle);
 
 	/* @section: random using game's exports */

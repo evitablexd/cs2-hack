@@ -26,29 +26,6 @@ bool math::Setup()
 	return bSuccess;
 }
 
-void math::AngleVectors(const QAngle_t& angles, Vector_t& forward)
-{
-	const auto sp = sin(deg_to_rad(angles.x)), cp = cos(deg_to_rad(angles.x)),
-		sy = sin(deg_to_rad(angles.y)), cy = cos(deg_to_rad(angles.y));
-
-	forward.x = cp * cy;
-	forward.y = cp * sy;
-	forward.z = -sp;
-}
-
-float math::GetFOV(const QAngle_t& view_angles, const Vector_t& start, const Vector_t& end)
-{
-	Vector_t dir, fw;
-
-	// get direction and normalize.
-	dir = (end - start).Normalized();
-
-	// get the forward direction vector of the view angles.
-	AngleVectors(view_angles, fw);
-
-	// get the angle between the view angles forward directional vector and the target location.
-	return std::max(rad_to_deg(std::acos(fw.DotProduct(dir))), 0.f);
-}
 
 float math::NormalizeYaw(float angle) {
 	if (!std::isfinite(angle))

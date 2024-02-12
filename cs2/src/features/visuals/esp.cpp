@@ -37,17 +37,20 @@ void esp::render()
 	if (!render::drawList)
 		return;
 
-	col_t name_color = col_t(g_variables.name_color[0] * 255.f, g_variables.name_color[1] * 255.f,
-		g_variables.name_color[2] * 255.f, (g_variables.name_color[3] * 255.f));
+	col_t name_color = col_t(settings.name_color[0] * 255.f, settings.name_color[1] * 255.f,
+		settings.name_color[2] * 255.f, (settings.name_color[3] * 255.f));
 
-	col_t box_color = col_t(g_variables.box_color[0] * 255.f, g_variables.box_color[1] * 255.f,
-		g_variables.box_color[2] * 255.f, (g_variables.box_color[3] * 255.f));
+	col_t ammo_color = col_t(settings.ammo_color[0] * 255.f, settings.ammo_color[1] * 255.f,
+		settings.ammo_color[2] * 255.f, (settings.ammo_color[3] * 255.f));
+
+	col_t box_color = col_t(settings.box_color[0] * 255.f, settings.box_color[1] * 255.f,
+		settings.box_color[2] * 255.f, (settings.box_color[3] * 255.f));
 
 	if (!interfaces::g_engine->IsInGame()) return;
 	if (!sdk::local_controller || !sdk::local_pawn) return;
 
 	// draw scope lines
-	if (g_variables.remove_scope && reinterpret_cast<C_CSPlayerPawn*>(sdk::local_pawn)->m_bIsScoped())
+	if (settings.remove_scope && reinterpret_cast<C_CSPlayerPawn*>(sdk::local_pawn)->m_bIsScoped())
 	{
 		render::drawList->AddLine(ImVec2(0, ImGui::GetIO().DisplaySize.y / 2), ImVec2(ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y / 2), ImColor(0, 0, 0, 255));
 		render::drawList->AddLine(ImVec2(ImGui::GetIO().DisplaySize.x / 2, 0), ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y), ImColor(0, 0, 0, 255));
@@ -82,14 +85,14 @@ void esp::render()
 		if (!valid_bbox)
 			continue;
 
-		if (g_variables.box_esp)
+		if (settings.box_esp)
 		{
 			render::rect(Vector2D_t(rect.left + 1, rect.top + 1), Vector2D_t(rect.right - 1, rect.bottom - 1), col_t(0, 0, 0, 255));
 			render::rect(Vector2D_t(rect.left - 1, rect.top - 1), Vector2D_t(rect.right + 1, rect.bottom + 1), col_t(0, 0, 0, 255));
 			render::rect(Vector2D_t(rect.left, rect.top), Vector2D_t(rect.right, rect.bottom), box_color);
 		}
 
-		if (g_variables.name_esp) {
+		if (settings.name_esp) {
 
 			std::string name{ controller->m_sSanitizedPlayerName() };
 
@@ -105,10 +108,10 @@ void esp::render()
 			render::text(name, Vector2D_t(rect.left + width * 0.5f, rect.top - size.y - 2), name_color, render::m_verdana, false, true, false, false, true);
 		}
 
-		if (!g_variables.healthbar_esp)
+		if (!settings.healthbar_esp)
 			hp_array[controller->GetRefEHandle().GetEntryIndex()] = 0.f;
 
-		if (g_variables.healthbar_esp)
+		if (settings.healthbar_esp)
 		{
 			int Index = controller->GetRefEHandle().GetEntryIndex();
 
@@ -140,7 +143,7 @@ void esp::render()
 			}
 		}
 
-		if (g_variables.weapon_text_esp) {
+		if (settings.weapon_text_esp) {
 			CPlayer_WeaponServices* pWeaponServices = pawn->m_pWeaponServices();
 			if (pWeaponServices) {
 				C_CSWeaponBase* pActiveWeapon = pWeaponServices->m_hActiveWeapon().Get<C_CSWeaponBase>();
@@ -149,22 +152,16 @@ void esp::render()
 					C_AttributeContainer pAttributeContainer = pActiveWeapon->m_AttributeManager();
 					C_EconItemView pItemView = pAttributeContainer.m_Item();
 
-					CCStrike15ItemDefinition* pItemStaticData = pItemView.GetStaticData();
-					if (!pItemStaticData) continue;
-
-					const char* szWeaponName = interfaces::g_localize->FindSafe(pItemStaticData->m_szItemLocalizedName);
-					if (!szWeaponName || strlen(szWeaponName) < 1) continue;
-
-					render::text(szWeaponName, Vector2D_t(rect.left + (abs(rect.right - rect.left) * 0.5f), rect.bottom), col_t(255, 255, 255, 255),
+					render::text(GetWeaponName(pItemView.m_iItemDefinitionIndex()), Vector2D_t(rect.left + (abs(rect.right - rect.left) * 0.5f), rect.bottom + 5), col_t(255, 255, 255, 255),
 						render::m_verdana, false, true, false, false, true);
 				}
 			}
 		}
 
-		if (!g_variables.ammobar_esp)
+		if (!settings.ammobar_esp)
 			ammo_array[controller->GetRefEHandle().GetEntryIndex()] = 0.f;
 
-		if (g_variables.ammobar_esp)
+		if (settings.ammobar_esp)
 		{
 			int plr_idx = controller->GetRefEHandle().GetEntryIndex();
 
@@ -192,7 +189,7 @@ void esp::render()
 			render::rect_filled(Vector2D_t(rect.right + 1, rect.bottom + 2), Vector2D_t(rect.left - 1, rect.bottom + 6), col_t(0.f, 0.f, 0.f, 120.f));
 
 			// actual bar
-			render::rect_filled(Vector2D_t(rect.left, rect.bottom + 3), Vector2D_t(rect.left + size, rect.bottom + 5), col_t(95, 174, 227, 255));
+			render::rect_filled(Vector2D_t(rect.left, rect.bottom + 3), Vector2D_t(rect.left + size, rect.bottom + 5), ammo_color);
 
 			// less than 90% ammo
 			if (pActiveWeapon->m_iClip1() < (pActiveWeapon->GetWeaponVData()->m_iMaxClip1() * 0.9))
@@ -200,7 +197,7 @@ void esp::render()
 					col_t(255, 255, 255, 255), render::m_verdana, false, false, false, false, true);
 		}
 
-		if (g_variables.flags_esp)
+		if (settings.flags_esp)
 		{
 			std::vector < flags_data_t > flags_data{ };
 			int idx = controller->GetRefEHandle().GetEntryIndex();
@@ -246,7 +243,7 @@ void esp::render()
 			}
 		}
 
-		if (g_variables.skeleton_esp) {
+		if (settings.skeleton_esp) {
 			CGameSceneNode* game_scene_node = pawn->m_pGameSceneNode();
 			if (!game_scene_node) continue;
 
@@ -278,8 +275,8 @@ void esp::render()
 				if (!render::world_to_screen(model_state.bones[bone_parent_index].position, bone_screen_parent_position))
 					continue;
 
-				col_t clr = col_t(g_variables.skeleton_color[0] * 255.f, g_variables.skeleton_color[1] * 255.f,
-					g_variables.skeleton_color[2] * 255.f, g_variables.skeleton_color[3] * 255.f);
+				col_t clr = col_t(settings.skeleton_color[0] * 255.f, settings.skeleton_color[1] * 255.f,
+					settings.skeleton_color[2] * 255.f, settings.skeleton_color[3] * 255.f);
 
 				render::line(Vector2D_t(bone_screen_position.x, bone_screen_position.y),
 					Vector2D_t(bone_screen_parent_position.x, bone_screen_parent_position.y), clr);
@@ -303,10 +300,10 @@ void esp::render()
 		{
 			C_SmokeGrenadeProjectile* smoke = reinterpret_cast<C_SmokeGrenadeProjectile*>(entity);
 
-			if (g_variables.custom_smoke)
-				smoke->m_vSmokeColor() = Vector_t(g_variables.smoke_color[0] * 255.f, g_variables.smoke_color[1] * 255.f, g_variables.smoke_color[2] * 255.f);
+			if (settings.custom_smoke)
+				smoke->m_vSmokeColor() = Vector_t(settings.smoke_color[0] * 255.f, settings.smoke_color[1] * 255.f, settings.smoke_color[2] * 255.f);
 
-			if (g_variables.smoke_rendering)
+			if (settings.smoke_rendering)
 				smoke->m_nSmokeEffectTickBegin() = -1;
 
 			Vector_t smoke_position = smoke->GetOrigin();
@@ -361,7 +358,7 @@ void esp::render()
 			Vector_t screen;
 
 			// glow
-			c4->GetGlowProperty().m_bGlowing() = g_variables.bomb_glow && !c4->m_bHasExploded() && !c4->m_bBombDefused();
+			c4->GetGlowProperty().m_bGlowing() = settings.bomb_glow && !c4->m_bHasExploded() && !c4->m_bBombDefused();
 			c4->GetGlowProperty().m_iGlowType() = 3;
 			c4->GetGlowProperty().m_glowColorOverride() = col_t(255, 0, 0, 230);
 
@@ -369,7 +366,7 @@ void esp::render()
 			if (!render::world_to_screen(pos, screen) || (c4->GetInterpolatedOrigin() - sdk::local_pawn->GetInterpolatedOrigin()).Length() > 2000.f
 				|| c4->m_bHasExploded()
 				|| c4->m_bBombDefused()
-				|| !g_variables.bomb_text)
+				|| !settings.bomb_text)
 				continue;
 
 			C_CSPlayerPawn* defuser_pawn = interfaces::g_game_resouce->entity_system->Get<C_CSPlayerPawn>(c4->m_hBombDefuser());
@@ -378,8 +375,8 @@ void esp::render()
 			auto alpha = std::clamp((750.f - (dist_world - 250.f)) / 750.f, 0.f, 1.f);
 
 			// draw main text
-			render::text("BOMB", Vector2D_t(screen.x, screen.y), c4->m_bBeingDefused() ? col_t(255, 0, 0, g_variables.bomb_text_fade ? 255 * alpha : 255) :
-				col_t(150, 200, 60, g_variables.bomb_text_fade ? 255 * alpha : 255), render::m_verdana, false, true, true, false, true);
+			render::text("BOMB", Vector2D_t(screen.x, screen.y), c4->m_bBeingDefused() ? col_t(255, 0, 0, settings.bomb_text_fade ? 255 * alpha : 255) :
+				col_t(150, 200, 60, settings.bomb_text_fade ? 255 * alpha : 255), render::m_verdana, false, true, true, false, true);
 
 			// draw timer
 			//render::text(std::to_string(std::abs(timer -= interfaces::g_global_vars->flCurtime)).c_str(), Vector2D_t(screen.x, screen.y + 10 + offset), col_t(255, 0, 0, 255 * alpha), render::m_verdana, false, true, true, false, true);
@@ -397,8 +394,8 @@ void esp::render_fsn(int stage)
 	if (stage != FRAME_RENDER_START)
 		return;
 
-	col_t glow_color = col_t(g_variables.glow_color[0] * 255.f, g_variables.glow_color[1] * 255.f,
-		g_variables.glow_color[2] * 255.f, (g_variables.glow_color[3] * 255.f));
+	col_t glow_color = col_t(settings.glow_color[0] * 255.f, settings.glow_color[1] * 255.f,
+		settings.glow_color[2] * 255.f, (settings.glow_color[3] * 255.f));
 
 	for (int i = 1; i <= interfaces::g_game_resouce->entity_system->GetHighestEntityIndex(); i++)
 	{
@@ -414,7 +411,7 @@ void esp::render_fsn(int stage)
 		C_CSPlayerPawn* pawn = interfaces::g_game_resouce->entity_system->Get<C_CSPlayerPawn>(controller->m_hPawn());
 		if (!pawn || pawn == sdk::local_pawn) { continue; }
 
-		pawn->GetGlowProperty().m_bGlowing() = g_variables.glow;
+		pawn->GetGlowProperty().m_bGlowing() = settings.glow;
 		pawn->GetGlowProperty().m_glowColorOverride() = glow_color;
 		pawn->GetGlowProperty().m_iGlowType() = 3;
 	}
@@ -433,11 +430,68 @@ void esp::render_fsn(int stage)
 	if (C_PostProcessingVolume* post_processing = sdk::local_pawn->m_pCameraServices()->m_hActivePostProcessingVolume().Get<C_PostProcessingVolume>()) {
 		if (post_processing)
 		{
-			float amount = (101 - g_variables.nightmode_strength) / 100.f;
+			float amount = (101 - settings.nightmode_strength) / 100.f;
 
-			post_processing->m_bExposureControl() = g_variables.nightmode;
+			post_processing->m_bExposureControl() = settings.nightmode;
 			post_processing->m_flMinExposure() = amount;
 			post_processing->m_flMaxExposure() = amount;
+		}
+	}
+}
+
+void esp::render_hitmarker()
+{
+	if (!sdk::local_controller || !sdk::local_pawn)
+		return;
+
+	if (!sdk::local_controller->m_bPawnIsAlive()) return;
+
+	if (!settings.hitmarker) {
+		m_hit_markers.clear();
+		return;
+	}
+
+	if (!m_hit_markers.empty()) {
+		auto it = m_hit_markers.begin();
+
+		while (it != m_hit_markers.end()) {
+			auto& cur_it = *it;
+			const auto life_time = interfaces::g_global_vars->m_SubGlobalVariables.m_flCurrentTime - cur_it.m_spawn_time;
+
+			if (cur_it.m_alpha < 1.f && life_time < 2.f) {
+				cur_it.m_alpha = std::lerp(cur_it.m_alpha, 1.f, 8.f * interfaces::g_global_vars->m_flFrameTime);
+			}
+			else if (cur_it.m_alpha > 0.f && life_time > 2.f) {
+				cur_it.m_alpha = std::lerp(cur_it.m_alpha, 0.f, 8.f * interfaces::g_global_vars->m_flFrameTime);
+			}
+
+			Vector2D_t screen_center = Vector2D_t(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2);
+
+			auto col = col_t(settings.hitmaker_color[0] * 255.f, settings.hitmaker_color[1] * 255.f,
+				settings.hitmaker_color[2] * 255.f, (settings.hitmaker_color[3] * 255.f) * cur_it.m_alpha);
+
+			float k_size = 6.f * cur_it.m_alpha;
+			render::line(
+				{ screen_center.x - k_size, screen_center.y - k_size },
+				{ screen_center.x - (k_size / 2), screen_center.y - (k_size / 2) }, col
+			);
+
+			render::line(
+				{ screen_center.x - k_size, screen_center.y + k_size },
+				{ screen_center.x - (k_size / 2), screen_center.y + (k_size / 2) }, col
+			);
+
+			render::line(
+				{ screen_center.x + k_size, screen_center.y + k_size },
+				{ screen_center.x + (k_size / 2), screen_center.y + (k_size / 2) }, col
+			);
+
+			render::line(
+				{ screen_center.x + k_size, screen_center.y - k_size },
+				{ screen_center.x + (k_size / 2), screen_center.y - (k_size / 2) }, col
+			);
+
+			life_time > 2.f && cur_it.m_alpha < 0.025f ? it = m_hit_markers.erase(it) : it++;
 		}
 	}
 }

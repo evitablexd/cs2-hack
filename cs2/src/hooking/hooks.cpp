@@ -93,9 +93,11 @@ void init_fonts()
 	ind_cfg.RasterizerMultiply = 1.2f;
 
 	render::m_verdana = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Tahoma.ttf"), 12.f, &esp_cfg, io.Fonts->GetGlyphRangesCyrillic());
-	render::m_tahoma14 = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Tahoma.ttf"), 13.f, &menu_elements_cfg, io.Fonts->GetGlyphRangesCyrillic());
+	render::m_logs = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Tahoma.ttf"), 12.f, &for_esp_shit, io.Fonts->GetGlyphRangesCyrillic());
+	render::m_tahoma14 = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Tahoma.ttf"), 12.f, &menu_elements_cfg, io.Fonts->GetGlyphRangesCyrillic());
 	//render::m_acta_symbols = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\acta.ttf"), 26.f, &menu_elements_cfg, io.Fonts->GetGlyphRangesCyrillic());
 	render::m_indicator_font = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Verdana.ttf"), 26.f, &ind_cfg, io.Fonts->GetGlyphRangesCyrillic());
+//	render::m_smallest_pixel = io.Fonts->AddFontFromFileTTF(("C:\\Windows\\Fonts\\Smallest_Pixel-7.ttf"), 26.f, &ind_cfg, io.Fonts->GetGlyphRangesCyrillic());
 }
 
 HRESULT __stdcall hooks::present::present_hook(IDXGISwapChain* swap_chain, UINT sync, UINT flags)
@@ -148,6 +150,9 @@ HRESULT __stdcall hooks::present::present_hook(IDXGISwapChain* swap_chain, UINT 
 	render::drawList = ImGui::GetBackgroundDrawList();
 
 	esp::render();
+	esp::render_hitmarker();
+
+	g_logs.draw_data();
 
 	ImGui::EndFrame();
 	ImGui::Render();
@@ -168,11 +173,11 @@ void __fastcall hooks::framestagenotify::framestage_hk(void* rcx, int stage)
 	if (stage == FRAME_RENDER_START)
 	{
 		if (interfaces::g_input) {
-			interfaces::g_input->bInThirdPerson = g_key_binds.get_keybind_state(&g_variables.thirdperson_key);
+			interfaces::g_input->bInThirdPerson = g_key_binds.get_keybind_state(&settings.thirdperson_key);
 
 			ConVar* dist = interfaces::g_cvar->FindVarByName("cam_idealdist");
 			if (dist)
-				dist->GetValue<float>() = g_variables.distance;
+				dist->GetValue<float>() = settings.distance;
 		}
 	}
 
@@ -254,9 +259,11 @@ void hooks::initialize_main()
 		reinterpret_cast<void*>(hooks::override_view::override_view),
 		reinterpret_cast<LPVOID*>(&hooks::override_view::original));
 
-	MH_CreateHook(signature::find("client.dll", "40 53 48 81 EC ? ? ? ? 49 8B C1").get<void*>(),
-		reinterpret_cast<void*>(hooks::get_matrices_for_view::get_matrices_for_view_hk),
-		reinterpret_cast<LPVOID*>(&hooks::get_matrices_for_view::original));
+	//MH_CreateHook(signature::find("client.dll", "E8 ? ? ? ? F3 0F 10 44 24 ? 8B 4C 24 50").add(0x1).rel32().get<void*>(),
+	//	reinterpret_cast<void*>(hooks::handle_pen::handle_bullet_pen),
+	//	reinterpret_cast<LPVOID*>(&hooks::handle_pen::original));
+
+	g_logs.push_log(tfm::format("welcome %s", "evitable"), col_t::palette_t::white());
 }
 
 void hooks::uninitialize()
@@ -300,6 +307,7 @@ void* __fastcall hooks::cvar_value::cvar_value_hk(void* cmd, int default_value)
 	// call cvar_value
 	// test rax, rax
 	static auto camera_think = signature::find("client.dll", "48 85 C0 75 0B 48 8B 05 ? ? ? ? 48 8B 40 08 44 38 38 75 3B").get<void*>();
+	//static auto sv_showimpacts = signature::find("client.dll", "48 85 C0 75 0B 48 8B 05 ? ? ? ? 48 8B 40 08 F3 0F 10 00 4C 8D 4D FC 48 8B 0D ? ? ? ? 4C 8D 45 90 33 C0").get<void*>();
 
 	static bool fake_cvar = true;
 	if (_ReturnAddress() == camera_think)
@@ -328,7 +336,7 @@ void __fastcall hooks::get_camera_offsets::get_camera_offsets_hk(void* a1, void*
 
 float __fastcall hooks::get_render_fov::get_render_fov_hk(void* rcx)
 {
-	if (!sdk::local_pawn || !sdk::local_controller || !g_variables.custom_fov)
+	if (!sdk::local_pawn || !sdk::local_controller || !settings.custom_fov)
 		return original(rcx);
 
 	CPlayer_WeaponServices* weapon = sdk::local_pawn->m_pWeaponServices();
@@ -339,10 +347,10 @@ float __fastcall hooks::get_render_fov::get_render_fov_hk(void* rcx)
 	if (!weapon_base)
 		return original(rcx);
 
-	if (g_variables.custom_fov_scoped)
+	if (settings.custom_fov_scoped)
 	{
 		if (weapon_base->m_zoomLevel() > 0)
-			return g_variables.fov;
+			return settings.fov;
 	}
 	else
 	{
@@ -350,7 +358,7 @@ float __fastcall hooks::get_render_fov::get_render_fov_hk(void* rcx)
 			return original(rcx);
 	}
 
-	return g_variables.fov;
+	return settings.fov;
 }
 
 bool __fastcall hooks::firstperson_legs::firstperson_legs_hk(void* rcx)
@@ -377,13 +385,18 @@ bool __fastcall hooks::firstperson_legs::firstperson_legs_hk(void* rcx)
 	if (interfaces::g_input->bInThirdPerson)
 		return original(rcx);
 
-	return g_variables.firstperson_leg ? false : true;
+	return settings.firstperson_leg ? false : true;
 }
 
 void* __fastcall hooks::level_init::level_init_hk(void* rcx, const char* map)
 {
 	interfaces::g_global_vars = signature::find("client.dll", "48 89 0D ? ? ? ? 48 89 41").self_rva(0x3u, 0x7u).deref().get<IGlobalVariables*>();
 	printf("CGlobalVars -> %p\n", interfaces::g_global_vars);
+
+	typedef void(__fastcall* fn)(void*, bool);
+	static auto remove_pvs = signature::find("engine2.dll", "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 88 51 30").get<fn>();
+
+	remove_pvs(interfaces::g_pPvsManager, false);
 
 	return original(rcx, map);
 }
@@ -393,13 +406,13 @@ bool __fastcall hooks::draw_object::draw_object(void* animtable_scene_object, vo
 	static material_t* vis_material = esp::create_material("visible", false, true, true);
 	static material_t* invis_material = esp::create_material("invisible", true, true, true);
 
-	col_t vis_color = col_t(g_variables.chams_color[0] * 255.f, g_variables.chams_color[1] * 255.f,
-		g_variables.chams_color[2] * 255.f, g_variables.chams_color[3] * 255.f);
+	col_t vis_color = col_t(settings.chams_color[0] * 255.f, settings.chams_color[1] * 255.f,
+		settings.chams_color[2] * 255.f, settings.chams_color[3] * 255.f);
 
-	col_t invis_color = col_t(g_variables.invis_chams_color[0] * 255.f, g_variables.invis_chams_color[1] * 255.f,
-		g_variables.invis_chams_color[2] * 255.f, g_variables.invis_chams_color[3] * 255.f);
+	col_t invis_color = col_t(settings.invis_chams_color[0] * 255.f, settings.invis_chams_color[1] * 255.f,
+		settings.invis_chams_color[2] * 255.f, settings.invis_chams_color[3] * 255.f);
 
-	if(!g_variables.chams)
+	if(!settings.chams)
 		return original(animtable_scene_object, dx11, data, data_counter, scene_view, scene_layer, unknown_pointer, unknown);
 
 	if(!data || !data->pscene_animatable_object || !sdk::local_controller || !sdk::local_pawn)
@@ -416,9 +429,6 @@ bool __fastcall hooks::draw_object::draw_object(void* animtable_scene_object, vo
 		return original(animtable_scene_object, dx11, data, data_counter, scene_view, scene_layer, unknown_pointer, unknown);
 
 	if (strstr(pClassInfo->m_name, "C_CSPlayerPawn") == 0) {
-
-		/* todo: weapon/other chams */
-
 		return original(animtable_scene_object, dx11, data, data_counter, scene_view, scene_layer, unknown_pointer, unknown);
 	}
 
@@ -429,7 +439,7 @@ bool __fastcall hooks::draw_object::draw_object(void* animtable_scene_object, vo
 	if (pPawn->m_iTeamNum() == sdk::local_pawn->m_iTeamNum() && pPawn != sdk::local_pawn)
 		return original(animtable_scene_object, dx11, data, data_counter, scene_view, scene_layer, unknown_pointer, unknown);
 
-	if(pPawn == sdk::local_pawn && !g_variables.local_chams)
+	if(pPawn == sdk::local_pawn && !settings.local_chams)
 		return original(animtable_scene_object, dx11, data, data_counter, scene_view, scene_layer, unknown_pointer, unknown);
 
 	data->m_material = invis_material;
@@ -452,10 +462,21 @@ void __fastcall hooks::event_handler::handle_events_hk(void* rcx, events_t* cons
 		if (CCSPlayerController * local_controller{ sdk::local_controller }) {
 			if (CCSPlayerController* controller{ event->get_player_controller("attacker") }; controller == local_controller) {
 
-				// to stuff here.
+				hit_marker_data_t hit_marker_data{ };
+				hit_marker_data.m_spawn_time = interfaces::g_global_vars->m_SubGlobalVariables.m_flCurrentTime;
+
+				esp::m_hit_markers.emplace_back(hit_marker_data);
 			}
 		}
 	} break;
+
+	case FNV1A::hash_32_fnv1a_const("round_start"): {
+		
+		g_logs.push_log("new round has started", col_t::palette_t::white());
+		esp::m_hit_markers.clear(); // reset
+
+	} break;
+
 	default:
 		break;
 	}
@@ -465,7 +486,7 @@ void __fastcall hooks::event_handler::handle_events_hk(void* rcx, events_t* cons
 
 bool __fastcall hooks::camera_far::camera_too_far(void* rcx)
 {
-	if (!sdk::local_controller || !sdk::local_pawn || !g_variables.remove_scope)
+	if (!sdk::local_controller || !sdk::local_pawn || !settings.remove_scope)
 		return original(rcx);
 
 	static auto addr = signature::find("client.dll", "84 C0 0F 84 ? ? ? ? 48 8B 0D ? ? ? ? 48 8D 95 ? ? ? ? C6 85 ? ? ? ? ? 48 8B 01").get<void*>();
@@ -504,7 +525,7 @@ float __fastcall hooks::get_desired_fov::get_desired_fov(void* rcx)
 
 void __fastcall hooks::draw_scope::draw_scope(void* rcx)
 {
-	if (!g_variables.remove_scope || !sdk::local_controller || !sdk::local_pawn)
+	if (!settings.remove_scope || !sdk::local_controller || !sdk::local_pawn)
 		return original(rcx);
 
 	// dont draw scope
@@ -516,11 +537,16 @@ void __fastcall hooks::draw_scope::draw_scope(void* rcx)
 
 bool __fastcall hooks::should_draw_crosshair::should_draw_crosshair(void* rcx)
 {
-	if (!g_variables.force_crosshair || !sdk::local_controller || !sdk::local_pawn)
+	if (!settings.force_crosshair || !sdk::local_controller || !sdk::local_pawn)
 		return original(rcx);
 
 	if (!reinterpret_cast<C_CSPlayerPawn*>(sdk::local_pawn)->m_bIsScoped())
 		return true;
 
 	return original(rcx);
+}
+
+bool __fastcall hooks::handle_pen::handle_bullet_pen(void* a1, void* tracer, void* a3, int a4, int* sv_showimpacts_penetration)
+{
+	return original(a1, tracer, a3, a4, sv_showimpacts_penetration);
 }
